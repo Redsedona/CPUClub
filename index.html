@@ -1,22 +1,168 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Perry High CPU Club</title>
-  </head>
-  <body>
-  
-  <script src="https://www.gstatic.com/firebasejs/4.6.0/firebase.js"></script>
-  <script>
-  // Initialize Firebase
-  var config = {
-    apiKey: "AIzaSyBE65o0OWjJmWeEIu8tqkVHpaEAuhy9I_c",
-    authDomain: "phs-cpuclub-portfolio.firebaseapp.com",
-    databaseURL: "https://phs-cpuclub-portfolio.firebaseio.com",
-    projectId: "phs-cpuclub-portfolio",
-    storageBucket: "phs-cpuclub-portfolio.appspot.com",
-    messagingSenderId: "1086653337098"
-  };
-  firebase.initializeApp(config);
-  </script>
-  </body>
+    <head>
+        <title>Perry High CPU Club</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <style>
+            /* Remove the navbar's default margin-bottom and rounded borders */ 
+            .navbar {
+                margin-bottom: 0;
+                border-radius: 0;
+            }
+
+            /* Add a gray background color and some padding to the footer */
+            footer {
+                background-color: #f2f2f2;
+                padding: 25px;
+            }
+        </style>
+
+
+        <script src="https://www.gstatic.com/firebasejs/4.6.0/firebase.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.6.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.6.0/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.6.0/firebase-firestore.js"></script>        
+        <script src="https://cdn.firebase.com/libs/firebaseui/2.4.1/firebaseui.js"></script>
+
+        <script>
+            // Initialize Firebase
+            var config = {
+                apiKey: "AIzaSyBE65o0OWjJmWeEIu8tqkVHpaEAuhy9I_c",
+                authDomain: "phs-cpuclub-portfolio.firebaseapp.com",
+                databaseURL: "https://phs-cpuclub-portfolio.firebaseio.com",
+                projectId: "phs-cpuclub-portfolio",
+                storageBucket: "phs-cpuclub-portfolio.appspot.com",
+                messagingSenderId: "1086653337098"
+            };
+            firebase.initializeApp(config);
+        </script>
+        <script type="text/javascript">
+            // FirebaseUI config.
+            var uiConfig = {
+                callbacks: {
+                    signInSuccess: function (currentUser, credential, redirectUrl) {
+                        // Do something.
+                        // Return type determines whether we continue the redirect automatically
+                        // or whether we leave that to developer to handle.
+                        return true;
+                    },
+                    uiShown: function () {
+                        
+                    }
+                },
+                credentialHelper: firebaseui.auth.CredentialHelper.ACCOUNT_CHOOSER_COM,
+                // Query parameter name for mode.
+                queryParameterForWidgetMode: 'mode',
+                // Query parameter name for sign in success url.
+                queryParameterForSignInSuccessUrl: 'signInSuccessUrl',
+                // Will use popup for IDP Providers sign-in flow instead of the default, redirect.
+                signInFlow: 'popup',
+                signInSuccessUrl: window.location.href,
+                signInOptions: [
+                    // Leave the lines as is for the providers you want to offer your users.
+                    firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+                    firebase.auth.GithubAuthProvider.PROVIDER_ID,
+                    {
+                        provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+                        // Whether the display name should be displayed in the Sign Up page.
+                        requireDisplayName: true
+                    }
+                ],
+                // Terms of service url.
+                tosUrl: '<your-tos-url>'
+            };
+
+            var ui = new firebaseui.auth.AuthUI(firebase.auth());
+            // The start method will wait until the DOM is loaded.
+            ui.start('#firebaseui-auth-container', uiConfig);
+        </script>
+        <script type="text/javascript">
+            initApp = function () {
+                firebase.auth().onAuthStateChanged(function (user) {
+                    $('#loginModal').modal('hide');
+                    if (user) {
+                        // User is signed in.
+                        var displayName = user.displayName;
+                        var email = user.email;
+                        var emailVerified = user.emailVerified;
+                        var photoURL = user.photoURL;
+                        var uid = user.uid;
+                        var phoneNumber = user.phoneNumber;
+                        var providerData = user.providerData;
+                        user.getIdToken().then(function (accessToken) {
+                            $('#sign-in').hide();
+                            $('#sign-out').show();
+                            $('#username').text(displayName);
+                        });
+                        
+                    } else {
+                        // User is signed out.                        
+                        $('#sign-in').show();
+                        $('#sign-out').hide();
+                    }
+                }, function (error) {
+                    console.log(error);
+                });
+            };
+
+            window.addEventListener('load', function () {
+                initApp();
+            });
+        </script>
+        <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/2.4.1/firebaseui.css" />
+    </head>
+    <body>
+        <nav class="navbar navbar-inverse">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>                        
+                    </button>
+                    <a class="navbar-brand" href="#">Perry High CPU Club</a>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    <ul class="nav navbar-nav">
+                        <li class="active"><a href="#">Home</a></li>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Projects Gallery</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li id="sign-in"><a href="#" data-toggle="modal" data-target="#loginModal"><span class="glyphicon glyphicon-log-in"></span>&nbsp;Sign in</a></li>
+                        <li id="sign-out"><a href="#" onclick="firebase.auth().signOut();"> <span class="glyphicon glyphicon-log-out"></span>&nbsp;Sign out (<span id="username"></span>)</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid bg-3 text-center"> 
+            <h3>Perry High CPU Club</h3>
+        </div>
+
+        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">Login</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="firebaseui-auth-container"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <footer class="container-fluid text-center">
+            <p>Copyright &copy; 2017 Perry High CPU Club.</p>
+        </footer>
+    </body>
 </html>
