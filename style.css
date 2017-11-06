@@ -14,3 +14,12 @@ footer {
 .member {
     display: none;
 }
+
+.memberpic {
+    height: 64px;
+    max-width: 64px;
+}
+
+.changed {
+    color: red;
+}

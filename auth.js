@@ -88,13 +88,10 @@ function getClubUser(uid, authuser) {
                        }).then(getClubUser(uid, authuser));    
         }
     });
-    
-    console.log('here');
-    
+        
     var rolesDoc = usersColl.doc('Roles');
     
     rolesDoc.get().then(function(doc) {
-        console.log('there');
         if (doc.exists) {
             if ($.inArray(uid, doc.data.member)) {
                 $('.member').show();
