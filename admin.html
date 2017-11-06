@@ -97,32 +97,43 @@
             let admin = [];
             let members = [];
 
+            /**
+             * Load the membership roll and the admin/member roles lists
+             */
             function loadMembership() {
-
-
+                // Load the roles lists
                 let rolesDoc = db.collection('roles').doc('list');
                 rolesDoc.get().then((docs) => {
+                    // Extract the admin and members roles arrays
                     let data = docs.data();
-
                     admin = data.admin;
                     members = data.member;
 
+                    // Get the list of all site users
                     db.collection('users').get()
                             .then(function (docs) {
-                                docs.forEach((doc) => {
-                                    let data = doc.data();
-
-                                    data.uid = doc.id;
-                                    console.log(data);
+                                // For each user
+                                docs.forEach((user) => {
+                                    // Get all user data
+                                    let data = user.data();
+                                    // Add the user's id to the data
+                                    data.uid = user.id;
+                                    // Add the user to the user list
                                     users.push(data);
                                 });
 
+                                // Build the user table from the retrieved data
                                 buildUserTable();
                             });
                 });
             }
 
+            /**
+             * Build an editable table for all of the user data
+             */
             function buildUserTable() {
+                // Create an empty table and replace the warning message in the
+                // html with the table
                 let MEMBER_TABLE = "<table class='table table-striped'>\n\
                                         <thead>\n\
                                             <th>Pic</th><th>Name</th>\n\
@@ -130,52 +141,56 @@
                                             <th>Member</th>\n\
                                             <th>Admin</th>\n\
                                         </thead>\n\
-                                    </table>";
-
+                                    </table>";                                  
                 let membership = $(MEMBER_TABLE);
                 $('#membership').empty();
                 $('#membership').append(membership);
 
+                // Create a table body for the table and add it to the table
                 let tbody = $('<tbody>');
                 membership.append(tbody);
 
+                // Look at every user
                 users.forEach((user) => {
+                    // Create a row for each user
                     let row = $('<tr>');
                     tbody.append(row);
 
+                    // Add a cell with the user's pic
                     let pic = $('<img src="' + user.pic + '">');
                     pic.addClass('memberpic');
-
                     row.append($('<td>').append(pic));
 
+                    // Add an editable cell with the user's name
                     let nameBox = $('<input type="text"  class="form-control"></input>');
                     nameBox.prop('value', user.name);
                     nameBox.attr('id', 'name_' + user.uid);
-                    nameBox.change(() => updateUser('name', user.uid));
+                    nameBox.change(function(){updateUser(user.uid, 'name', 
+                                              $(this).val());});
                     nameBox.on('input', () => changed('name_' + user.uid));
-
                     row.append($('<td>').append(nameBox));
 
-
+                    // Add an editable cell with the user's affiliation to the club
                     let affiliationBox = $('<input type="text"  class="form-control"></input>');
                     affiliationBox.prop('value', user.affiliation);
                     affiliationBox.attr('id', 'affiliation_' + user.uid);
-                    affiliationBox.change(() => updateUser('affiliation', user.uid));
+                    affiliationBox.change(function(){updateUser(user.uid, 
+                                                     'affiliation', $(this).val());});
                     affiliationBox.on('input', () => changed('affiliation_' + user.uid));
-
                     row.append($('<td>').append(affiliationBox));
 
-
+                    // Add a checkbox for the user's membership status
                     let memberBox = $('<input type="checkbox"></input>');
                     memberBox.prop('checked', members.indexOf(user.uid) >= 0);
                     memberBox.attr('id', 'member_' + user.uid);
-                    memberBox.click(() => toggleMember(user.uid));
+                    memberBox.click(function () {toggleMember(user.uid, this);});
                     row.append($('<td>').append(memberBox));
 
+                    // Add a checkbox for the user's admin status
                     let adminBox = $('<input type="checkbox"></input>');
                     adminBox.prop('checked', admin.indexOf(user.uid) >= 0);
                     adminBox.attr('id', 'admin_' + user.uid);
-                    adminBox.click(() => toggleAdmin(user.uid));
+                    adminBox.click(function () {toggleAdmin(user.uid, this);});
                     row.append($('<td>').append(adminBox));
                 });
             }
@@ -184,10 +199,12 @@
              * Set whether a given user is admin, based on a checkbox
              * 
              * @param {String} uid 
+             * @param {input type=checkbox} adminBox
              */
-            function toggleAdmin(uid) {
-                let adminBox = $("#admin_" + uid);
-
+            function toggleAdmin(uid, adminBox) {
+                adminBox = $(adminBox);
+                adminBox.addClass('updating');
+                
                 // Determine if the user should be made admin (is the checkbox checked)
                 let isSet = adminBox.prop('checked');
 
@@ -207,14 +224,21 @@
 
                 // Update the admin roles in the database
                 db.collection('roles').doc('list').update({admin: admin})
-                        .then(() => adminBox.removeClass('changed'));
+                        .then(() => adminBox.removeClass('updating'));
             }
 
-            function toggleMember(uid) {
-                let memberBox = $("#member_" + uid);
+            /**
+             * Set whether a given user is a club member, based on a checkbox
+             * 
+             * @param {String} uid the user id
+             * @param {input type=checkbox} memberBox
+             */
+            function toggleMember(uid, memberBox) {
+                memberBox = $(memberBox);
+                memberBox.addClass('updating');
+                
                 // Determine if the user should be made a member (is the checkbox checked)
                 let isSet = memberBox.prop('checked');
-                memberBox.addClass('changed');
 
                 // Determine where in the members array the uid currently exists
                 let userLoc = members.indexOf(uid);
@@ -232,23 +256,42 @@
 
                 // Update the membership roles in the database
                 db.collection('roles').doc('list').update({member: members})
-                        .then(() => memberBox.removeClass('changed'));
+                        .then(() => memberBox.removeClass('updating'));
             }
 
-            function updateUser(key, uid) {
+            /**
+             * Update information about a user
+             * 
+             * @param {String} uid the uid to update
+             * @param {String} key the information to update
+             * @param {String|Number} newData the data to update
+             */
+            function updateUser(uid, key, newData) {
                 let item = $("#" + key + "_" + uid);
-                let newData = item.prop('value');
+                item.addClass('updating');
+                item.removeClass('changed');
+                
+                // Map the update data
                 let updateMap = {};
                 updateMap[key] = newData;
 
+                // Update the data in the database
                 db.collection('users').doc(uid).update(updateMap)
-                        .then(() => item.removeClass('changed'));
+                        // When successful, remove the 'changed' indicator
+                        .then(() => item.removeClass('updating'));
             }
 
+            /**
+             * Add a changed indicator to any textbox when it is modified
+             * @param {String} id
+             */
             function changed(id) {
                 $('#' + id).addClass('changed');
             }
 
+            /**
+             * Load club membership when the page has finished loading
+             */
             window.addEventListener('load', function () {
                 loadMembership();
             });

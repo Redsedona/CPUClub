@@ -23,3 +23,15 @@ footer {
 .changed {
     color: red;
 }
+
+input[type=checkbox].updating {
+    outline: 5px solid yellow;
+}
+
+input[type=text].changed {
+    outline: 3px solid red;
+}
+
+input[type=text].updating {
+    outline: 3px solid yellow;
+}
