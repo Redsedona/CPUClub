@@ -59,7 +59,9 @@ initApp = function () {
             // User is signed out.                        
             $('#sign-in').show();
             $('#sign-out').hide();
-            $('#username').text("");            
+            $('#username').text("");
+            $('.admin').hide();
+            $('.member').hide();
             clubuser = null;
         }
     }, function (error) {
@@ -82,14 +84,37 @@ function getClubUser(uid, authuser) {
         else {           
             userDoc.set({name: authuser.displayName, 
                         pic: authuser.photoURL,
-                        membership: ""
+                        affiliation: ""
                        }).then(getClubUser(uid, authuser));    
+        }
+    });
+    
+    console.log('here');
+    
+    var rolesDoc = usersColl.doc('Roles');
+    
+    rolesDoc.get().then(function(doc) {
+        console.log('there');
+        if (doc.exists) {
+            if ($.inArray(uid, doc.data.member)) {
+                $('.member').show();
+            }
+            else {
+                $('.member').hide();
+            }
+            
+            if ($.inArray(uid, doc.data.admin)) {
+                $('.admin').show();
+            }
+            else {
+                $('.admin').hide();
+            }
         }
     });
 }
 
-
 function setClubUser(data) {
     clubuser = data;
     $('#username').text("(" + data.name + ")");
+    
 }
