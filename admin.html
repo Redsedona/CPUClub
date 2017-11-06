@@ -91,84 +91,95 @@
         <footer class="container-fluid text-center">
             <p>Copyright &copy; 2017 Perry High CPU Club.</p>
         </footer>
-        
+
         <script>
             let users = [];
             let admin = [];
             let members = [];
 
             function loadMembership() {
-                let MEMBER_TABLE = "<table class='table table-striped'>\n\
-        <thead>\n\
-            <th>Pic</th><th>Name</th><th>Affiliation</th><th>Member</th><th>Admin</th>\n\
-        </thead>\n\
-        </table>";
-                let userColl = db.collection('users');
-                
-                userColl.get().then(function(docs) {
-                    docs.forEach((doc) => {
-                        let data = doc.data();
-                        
-                        if (doc.id === 'Roles') {
-                            admin = data.admin;
-                            members = data.member;
-                        }
-                        else {
-                            data.uid = doc.id;
-                            users.push(data);
-                        }
-                    });
-                    
-                                       
-                    let membership = $(MEMBER_TABLE);
-                    $('#membership').empty();
-                    $('#membership').append(membership);
-                    
-                    let tbody = $('<tbody>');
-                    membership.append(tbody);
-                                        
-                    users.forEach((user) => {   
-                        let row=$('<tr>');
-                        tbody.append(row);
-                        
-                        let pic=$('<img src="' + user.pic + '">');
-                        pic.addClass('memberpic');
-                        
-                        row.append($('<td>').append(pic));
-                        
-                        let nameBox = $('<input type="text"  class="form-control"></input>');
-                        nameBox.prop('value', user.name);
-                        nameBox.attr('id', 'name_' + user.uid);
-                        nameBox.change(() => updateUser('name', user.uid));
-                        nameBox.on('input', () => changed('name_' + user.uid ));
-                        
-                        row.append($('<td>').append(nameBox));
-                        
-                        
-                        let affiliationBox = $('<input type="text"  class="form-control"></input>');
-                        affiliationBox.prop('value', user.affiliation);
-                        affiliationBox.attr('id', 'affiliation_' + user.uid);
-                        affiliationBox.change(() => updateUser('affiliation', user.uid));
-                        affiliationBox.on('input', () => changed('affiliation_' + user.uid ));
-                        
-                        row.append($('<td>').append(affiliationBox));
-                        
-                        
-                        let memberBox = $('<input type="checkbox"></input>');
-                        memberBox.prop('checked', members.indexOf(user.uid) >= 0);
-                        memberBox.attr('id', 'member_' + user.uid);
-                        memberBox.click(() => toggleMember(user.uid));
-                        row.append($('<td>').append(memberBox));
-                        
-                        let adminBox = $('<input type="checkbox"></input>');
-                        adminBox.prop('checked', admin.indexOf(user.uid) >= 0);
-                        adminBox.attr('id', 'admin_' + user.uid);
-                        adminBox.click(() => toggleAdmin(user.uid));
-                        row.append($('<td>').append(adminBox));                        
-                    });
+
+
+                let rolesDoc = db.collection('roles').doc('list');
+                rolesDoc.get().then((docs) => {
+                    let data = docs.data();
+
+                    admin = data.admin;
+                    members = data.member;
+
+                    db.collection('users').get()
+                            .then(function (docs) {
+                                docs.forEach((doc) => {
+                                    let data = doc.data();
+
+                                    data.uid = doc.id;
+                                    console.log(data);
+                                    users.push(data);
+                                });
+
+                                buildUserTable();
+                            });
                 });
             }
-            
+
+            function buildUserTable() {
+                let MEMBER_TABLE = "<table class='table table-striped'>\n\
+                                        <thead>\n\
+                                            <th>Pic</th><th>Name</th>\n\
+                                            <th>Affiliation</th>\n\
+                                            <th>Member</th>\n\
+                                            <th>Admin</th>\n\
+                                        </thead>\n\
+                                    </table>";
+
+                let membership = $(MEMBER_TABLE);
+                $('#membership').empty();
+                $('#membership').append(membership);
+
+                let tbody = $('<tbody>');
+                membership.append(tbody);
+
+                users.forEach((user) => {
+                    let row = $('<tr>');
+                    tbody.append(row);
+
+                    let pic = $('<img src="' + user.pic + '">');
+                    pic.addClass('memberpic');
+
+                    row.append($('<td>').append(pic));
+
+                    let nameBox = $('<input type="text"  class="form-control"></input>');
+                    nameBox.prop('value', user.name);
+                    nameBox.attr('id', 'name_' + user.uid);
+                    nameBox.change(() => updateUser('name', user.uid));
+                    nameBox.on('input', () => changed('name_' + user.uid));
+
+                    row.append($('<td>').append(nameBox));
+
+
+                    let affiliationBox = $('<input type="text"  class="form-control"></input>');
+                    affiliationBox.prop('value', user.affiliation);
+                    affiliationBox.attr('id', 'affiliation_' + user.uid);
+                    affiliationBox.change(() => updateUser('affiliation', user.uid));
+                    affiliationBox.on('input', () => changed('affiliation_' + user.uid));
+
+                    row.append($('<td>').append(affiliationBox));
+
+
+                    let memberBox = $('<input type="checkbox"></input>');
+                    memberBox.prop('checked', members.indexOf(user.uid) >= 0);
+                    memberBox.attr('id', 'member_' + user.uid);
+                    memberBox.click(() => toggleMember(user.uid));
+                    row.append($('<td>').append(memberBox));
+
+                    let adminBox = $('<input type="checkbox"></input>');
+                    adminBox.prop('checked', admin.indexOf(user.uid) >= 0);
+                    adminBox.attr('id', 'admin_' + user.uid);
+                    adminBox.click(() => toggleAdmin(user.uid));
+                    row.append($('<td>').append(adminBox));
+                });
+            }
+
             /**
              * Set whether a given user is admin, based on a checkbox
              * 
@@ -176,64 +187,64 @@
              */
             function toggleAdmin(uid) {
                 let adminBox = $("#admin_" + uid);
-                
+
                 // Determine if the user should be made admin (is the checkbox checked)
                 let isSet = adminBox.prop('checked');
-                
+
                 // Determine where in the admin array the uid currently exists
                 let userLoc = admin.indexOf(uid);
-                
+
                 // Remove the uid from the admin array
                 if (userLoc >= 0) {
                     admin.splice(userLoc, 1);
                 }
-                
+
                 // If the user should be admin
                 if (isSet) {
                     // add the uid to the admin array
                     admin.push(uid);
                 }
-                
+
                 // Update the admin roles in the database
-                db.collection('users').doc('Roles').update({ admin : admin })
-                        .then(() => adminBox.removeClass('changed'));                
+                db.collection('roles').doc('list').update({admin: admin})
+                        .then(() => adminBox.removeClass('changed'));
             }
-            
+
             function toggleMember(uid) {
-                let memberBox =  $("#member_" + uid);
+                let memberBox = $("#member_" + uid);
                 // Determine if the user should be made a member (is the checkbox checked)
                 let isSet = memberBox.prop('checked');
                 memberBox.addClass('changed');
 
                 // Determine where in the members array the uid currently exists
                 let userLoc = members.indexOf(uid);
-                
+
                 // Remove the uid from the member array
                 if (userLoc >= 0) {
                     members.splice(userLoc, 1);
                 }
-                
+
                 // If the user should be a member
                 if (isSet) {
                     // add the uid to the member array
                     members.push(uid);
                 }
-                
+
                 // Update the membership roles in the database
-                db.collection('users').doc('Roles').update({ member : members })
-                        .then(() => memberBox.removeClass('changed')); 
+                db.collection('roles').doc('list').update({member: members})
+                        .then(() => memberBox.removeClass('changed'));
             }
-            
+
             function updateUser(key, uid) {
                 let item = $("#" + key + "_" + uid);
                 let newData = item.prop('value');
                 let updateMap = {};
                 updateMap[key] = newData;
-                
+
                 db.collection('users').doc(uid).update(updateMap)
                         .then(() => item.removeClass('changed'));
             }
-            
+
             function changed(id) {
                 $('#' + id).addClass('changed');
             }

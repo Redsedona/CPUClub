@@ -74,8 +74,7 @@ window.addEventListener('load', function () {
 });
 
 function getClubUser(uid, authuser) {
-    var usersColl = db.collection('users');
-    var userDoc = usersColl.doc(uid);
+    var userDoc = db.collection('users').doc(uid);
     
     userDoc.get().then(function(doc) {
         if(doc.exists) {
@@ -89,7 +88,7 @@ function getClubUser(uid, authuser) {
         }
     });
         
-    var rolesDoc = usersColl.doc('Roles');
+    var rolesDoc = db.collection('roles').doc('list');
     
     rolesDoc.get().then(function(doc) {
         if (doc.exists) {
