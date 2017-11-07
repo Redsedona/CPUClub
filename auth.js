@@ -78,7 +78,7 @@ function getClubUser(uid, authuser) {
     
     userDoc.get().then(function(doc) {
         if(doc.exists) {
-            setClubUser(doc.data());
+            setClubUser(doc.data(), uid);
         }
         else {           
             userDoc.set({name: authuser.displayName, 
@@ -109,8 +109,9 @@ function getClubUser(uid, authuser) {
     });
 }
 
-function setClubUser(data) {
+function setClubUser(data, uid) {
     clubuser = data;
+    clubuser.uid = uid;
     $('#username').text("(" + data.name + ")");
     
 }
