@@ -157,7 +157,8 @@
                     tbody.append(row);
 
                     // Add a cell with the user's pic
-                    let pic = $('<img src="' + user.pic + '">');
+                    let pic = $('<img>');
+                    pic.attr('src', user.pic);
                     pic.addClass('memberpic');
                     row.append($('<td>').append(pic));
 
